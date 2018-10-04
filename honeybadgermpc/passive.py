@@ -51,7 +51,9 @@ class PassiveMpc(object):
     
         filename = 'sharedata/test_triples-%d.share' % (self.myid,)
         self._triples = iter(self.read_shares(open(filename)))
-        
+
+        filename = 'sharedata/bits-%d.share' % (self.myid,)
+        self._bits = iter(self.read_shares(open(filename)))
 
     def _reconstruct(self, shareid):
         # Are there enough shares to reconstruct?
@@ -222,6 +224,8 @@ async def runProgramInNetwork(program, N, t):
 Field = GF(0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001)
 Poly = polynomialsOver(Field)
 
+security_parameter = 32
+
 
 def write_polys(prefix, modulus, N, t, polys):
     for i in range(N):
@@ -254,6 +258,14 @@ def generate_test_randoms(prefix, k, N, t):
     polys = []
     for j in range(k):
         polys.append(Poly.random(t))
+    write_polys(prefix, Field.modulus, N, t, polys)
+
+
+def generate_test_bits(prefix, k, N, t):
+    polys = []
+    for j in range(k):
+        bit = randint(0, 1)
+        polys.append(Poly.random(t, bit))
     write_polys(prefix, Field.modulus, N, t, polys)
 
 
@@ -378,6 +390,76 @@ async def test_jubjub_add(context):
     print("result: ", result.x, result.y)
 
 
+async def equality_(context, share_p, share_q):
+
+    def legendre_mod_p(a):
+        """Return the legendre symbol ``legendre(a, p)`` where *p* is the
+        order of the field of *a*.
+
+        """
+        assert a.modulus % 2 == 1
+        b = (a ** ((a.modulus - 1)//2))
+        if b == 1:
+            return 1
+        elif b == a.modulus-1:
+            return -1
+        return 0
+
+    a = share_p - share_q
+    k = security_parameter
+
+    def mul(x, y):
+            a, b, ab = context.get_triple()
+            return beaver_mult(context, x, y, a, b, ab)
+
+    async def _gen_test_bit():
+        # b \in {0, 1}
+        # _b \in {5, 1}, for p = 1 mod 8, s.t. (5/p) = -1
+        # so _b = -4 * b + 5
+        _b = (-4) * context.get_bit() + context.Share(5)
+        _r = context.get_rand()
+        _rp = context.get_rand()
+
+        # c = a * r + b * rp * rp
+        # If b_i == 1 c_i will always be a square modulo p if a is
+        # zero and with probability 1/2 otherwise (except if rp == 0).
+        # If b_i == -1 it will be non-square.
+        return (await (await mul(a, _r) + await mul(_b, await mul(_rp, _rp))).open()), _b
+
+    async def gen_test_bit():
+        while 1:
+            c, b = await _gen_test_bit()
+            if c != 0:
+                break
+
+        l = legendre_mod_p(c)
+
+        if l == 1:
+            xj = (1 / Field(2)) * (b + context.Share(1))
+        elif l == -1:
+            xj = (-1) * (1 / Field(2)) * (b - context.Share(1))
+
+        return xj
+
+    x = [await gen_test_bit() for _ in range(k)]
+
+    # Take the product (this is here the same as the "and") of all
+    # the x'es
+    while len(x) > 1:
+        x.append(await mul(x.pop(0), x.pop(0)))
+
+    # return await x[0].open()
+    return x[0]
+
+
+async def test_equality(context):
+    p = context.get_zero() + context.Share(10)
+    q = context.get_zero() + context.Share(10)
+
+    result = await equality_(context, p, q)
+    print("result: ", await result.open())
+
+
 # Run some test cases
 if __name__ == '__main__':
     print('Generating random shares of zero in sharedata/')
@@ -386,6 +468,8 @@ if __name__ == '__main__':
     generate_test_randoms('sharedata/test_rand', 1000, 3, 2)
     print('Generating random shares of triples in sharedata/')
     generate_test_triples('sharedata/test_triples', 1000, 3, 2)
+    print('Generating random shares of bits in sharedata/')
+    generate_test_triples('sharedata/bits', 1000, 3, 2)
 
     asyncio.set_event_loop(asyncio.new_event_loop())
     loop = asyncio.get_event_loop()
@@ -395,5 +479,7 @@ if __name__ == '__main__':
         loop.run_until_complete(runProgramInNetwork(test_prog2, 3, 2))
         loop.run_until_complete(runProgramInNetwork(test_prog3, 3, 2))
         loop.run_until_complete(runProgramInNetwork(test_jubjub_add, 3, 2))
+        loop.run_until_complete(runProgramInNetwork(test_equality, 3, 2))
+
     finally:
         loop.close()
