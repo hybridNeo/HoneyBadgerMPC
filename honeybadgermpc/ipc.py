@@ -93,7 +93,7 @@ class Senders(object):
                 self.totalBytesSent += len(padded_msg)
                 writer.write(padded_msg)
                 await writer.drain()
-                await asyncio.sleep(0.00000000001)
+                await asyncio.sleep(0.001)
         except ConnectionResetError:
             print("WARNING: Connection with peer [%s] reset." % recvid)
         except ConnectionRefusedError:
@@ -105,6 +105,7 @@ class Senders(object):
         await asyncio.gather(*[q.put(None) for q in self.queues])
         await asyncio.gather(*self.tasks)
         self.benchlogger.info("Total bytes sent out: %d", self.totalBytesSent)
+        print("Total bytes sent out ", self.totalBytesSent)
 
 
 class Listener(object):

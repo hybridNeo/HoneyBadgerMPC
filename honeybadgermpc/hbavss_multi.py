@@ -1,6 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto import Random
 import hashlib
+import time
 import os
 import pickle
 import asyncio
@@ -243,7 +244,7 @@ class HbAvssDealer:
         # Random polynomial coefficients constructed in the form
         # [c       x        x^2        ...  x^t]
         # This is structured so that t+1 points are needed to reconstruct the polynomial
-        time2 = os.times()
+        time2 = time.time()
         nodeid = os.environ.get('HBMPC_NODE_ID')
         self.benchmarkLogger = BenchmarkLogger.get(nodeid)
         (t, n, crs, participantids, participantkeys, dealerid, sid) = publicparams
@@ -270,7 +271,7 @@ class HbAvssDealer:
         message = pickle.dumps(
             (c, encryptedwitnesses, encryptedshares, crs[0] ** sk))
 
-        dealer_time = str(os.times()[4] - time2[4])
+        dealer_time = str(time.time() - time2)
         print("Dealer Time: " + dealer_time)
         # benchmarking: time taken by dealer
         self.benchmarkLogger.info("AVSS dealer time:  " + dealer_time)
@@ -311,7 +312,7 @@ class HbAvssRecipient:
         for msgtype in msgtypes:
             self.queues[msgtype] = Queue()
             self.recvs[msgtype] = self.makeRecv(msgtype)
-        self.time2 = os.times()
+        self.time2 = time.time()
         loop = asyncio.get_event_loop()
         loop.create_task(rbc_and_send(self.sid, self.pid, self.n+1,
                                       self.t, self.dealerid, None,
@@ -328,35 +329,34 @@ class HbAvssRecipient:
         while not self.finished:
             # print('recvd message ')
             sender, msg = await self.recv()
-            await self.receive_msg(sender, msg)
+            self.receive_msg(sender, msg)
 
-    async def receive_msg(self, sender, msg):
-        start_time = os.times()
+    def receive_msg(self, sender, msg):
+        start_time = time.time()
         if msg[1] in ["READY", "ECHO", "VAL"]:
             self.queues["rb"].put_nowait((sender, msg))
         if msg[1] == "send":
             self.rbfinished = True
-            decrypt_start_time = os.times()
+            decrypt_start_time = time.time()
             self.benchmarkLogger.info("Begin Decryption")
             print("[{}]Begin Decryption".format(self.sid))
             message = pickle.loads(msg[2])
-            print(" Pickle time " + str(os.times()[4] - decrypt_start_time[4]))
             (self.commit, self.encwitnesses, self.encshares, pk_d) = message
 
-            # self.sharedkey = str(pk_d**self.sk).encode('utf-8')
-            self.sharedkey = await _run_in_thread(lambda: str(pk_d**self.sk)
-                                                  .encode('utf-8'))
+            self.sharedkey = str(pk_d**self.sk).encode('utf-8')
+            # self.sharedkey = await _run_in_thread(lambda: str(pk_d**self.sk)
+            #                                     .encode('utf-8'))
 
             self.share = decrypt(self.sharedkey, self.encshares[self.pid])
             self.witness = decrypt(self.sharedkey, self.encwitnesses[self.pid])
-            # if self.pc.verify_eval(self.commit, self.pid+1, self.share, self.witness):
-            if await _run_in_thread(self.pc.verify_eval, self.commit,
-                                    self.pid+1, self.share, self.witness):
-                decryption_time = (os.times()[4] - decrypt_start_time[4])
-                print("[{}] decryption time : ".format(self.sid) + str(decryption_time))
-                self.benchmarkLogger.info("decryption time :  " + str(decryption_time))
+            if self.pc.verify_eval(self.commit, self.pid+1, self.share, self.witness):
+            # if await _run_in_thread(self.pc.verify_eval, self.commit,
+            #                        self.pid+1, self.share, self.witness):
+                decryption_time = str(time.time() - decrypt_start_time)
+                print("[{}] decryption time : ".format(self.sid) + (decryption_time))
+                self.benchmarkLogger.info("decryption time :  " + (decryption_time))
                 global total_time
-                total_time += decryption_time
+                total_time += float(decryption_time)
                 self.send_ok_msgs()
                 self.sendrecs = True
             else:
@@ -364,7 +364,7 @@ class HbAvssRecipient:
                 self.send_implicate_msgs()
             while not self.queues["hbavss"].empty():
                 (i, o) = self.queues["hbavss"].get_nowait()
-                await self.receive_msg(i, o)
+                self.receive_msg(i, o)
         if not self.rbfinished:
             self.queues["hbavss"].put_nowait((sender, msg))
         elif msg[1] == "ok":
@@ -378,9 +378,9 @@ class HbAvssRecipient:
                 self.output = self.share
 
                 print('[{}] Output available'.format(self.sid), self.output)
-                recipient_time = str(os.times()[4] - self.time2[4])
+                recipient_time = str(time.time() - self.time2)
                 print("[{}] Recipient Time: ".format(self.sid) + recipient_time)
-                service_time = str(os.times()[4] - start_time[4])
+                service_time = str(time.time() - start_time)
                 print("[{}] Total service Time: ".format(self.sid) + service_time)
 
                 # benchmarking: time taken by dealer

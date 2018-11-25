@@ -195,6 +195,8 @@ def trigger_run(runId, skip_setup, max_k, only_setup):
         instanceConfig = getButterflyNetworkInstanceConfig(max_k, instanceIps)
     elif AwsConfig.MPC_CONFIG.COMMAND.endswith("secretshare_hbavsslight"):
         instanceConfig = getHbAVSSInstanceConfig(instanceIps)
+    elif AwsConfig.MPC_CONFIG.COMMAND.endswith("hbavss_multi"):
+        instanceConfig = getHbAVSSMultiInstanceConfig(instanceIps)
     else:
         print("Application not supported to run on AWS.")
         raise SystemError
