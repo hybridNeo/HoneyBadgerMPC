@@ -118,13 +118,18 @@ class Listener(object):
     def __init__(self, port):
         self.queues = {}
         self.tasks = []
-        server_future = asyncio.start_server(self.handle_client, "", port)
+        server_future = asyncio.start_server(self.handle_client, self.get_host_ip(), port)
         self.serverTask = asyncio.ensure_future(server_future)
 
     def get_program_queue(self, sid):
         assert sid not in self.queues
         self.queues[sid] = asyncio.Queue()
         return self.queues[sid]
+
+    def get_host_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        return (s.getsockname()[0])
 
     def clear_all_program_queues(self):
         self.queues = {}
