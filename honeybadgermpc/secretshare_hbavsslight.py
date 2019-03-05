@@ -471,7 +471,7 @@ async def rbc_and_send(sid, pid, n, t, k, ignoreme, receive, send):
 # Run as either node or dealer, depending on command line arguments
 # Uses the same configuration format as hbmpc
 
-async def run_hbavss_light(config, n, t, id):
+async def run_hbavss_light(config, n, t, id, value):
     program_runner = ProcessProgramRunner(config, n+1, t, id)
     sender, listener = program_runner.senders, program_runner.listener
     send, recv = program_runner.get_send_and_recv(0)
@@ -503,7 +503,7 @@ async def run_hbavss_light(config, n, t, id):
 
     # Launch the protocol
     if id == dealerid:
-        thread = HbAvssDealer(pubparams, (42, id), send, recv)
+        thread = HbAvssDealer(pubparams, (value, id), send, recv)
     else:
         my_private_key = participantprivkeys[id]
         thread = HbAvssRecipient(
@@ -548,13 +548,15 @@ if __name__ == "__main__":
     from .config import load_config
     from .ipc import NodeDetails, ProcessProgramRunner
 
+  
     configfile = os.environ.get('HBMPC_CONFIG')
     nodeid = os.environ.get('HBMPC_NODE_ID')
-
+    value = 42 # if value to be shared in not passed via arguments.
     # override configfile if passed to command
     try:
         nodeid = sys.argv[1]
         configfile = sys.argv[2]
+        value = sys.argv[3]
     except IndexError:
         pass
 
@@ -579,6 +581,6 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.set_debug(True)
     try:
-        loop.run_until_complete(run_hbavss_light(network_info, N, t, nodeid))
+        loop.run_until_complete(run_hbavss_light(network_info, N, t, nodeid, value))
     finally:
         loop.close()
