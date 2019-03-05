@@ -556,7 +556,7 @@ if __name__ == "__main__":
     try:
         nodeid = sys.argv[1]
         configfile = sys.argv[2]
-        value = sys.argv[3]
+        value = int(sys.argv[3])
     except IndexError:
         pass
 
