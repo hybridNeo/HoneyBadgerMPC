@@ -1,14 +1,15 @@
 import subprocess
 import os
+import sys
 from honeybadgermpc.robust_reconstruction import attempt_reconstruct
 from honeybadgermpc.field import GF
 from honeybadgermpc.polynomial import EvalPoint
 
-def get_shares(peers):
+def get_shares(peers, key, namespace):
 	env = os.environ.copy()
 	
 	
-	cmd = '{"Args":["getKey", "0"  ]}' 
+	cmd = '{"Args":["getKey", "' + key +  '"," ' + namespace +'"  ]}' 
 	
 	shares = []
 	for i in peers:
@@ -31,8 +32,13 @@ peers = ['peer0.org1.example.com:7051','peer1.org1.example.com:7051'
 
 
 def main():
+	if(len(sys.argv) < 3):
+		print("Invalid arguments, enter key and namespace")
+		os.exit(0)
+	key = sys.argv[1]
+	namespace = sys.argv[2]
 	print('Getting shares from peers -----------------------')
-	shares = get_shares(peers)
+	shares = get_shares(peers, key, namespace)
 	print(shares)
 	BLS12_381 = 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001
 	field = GF.get(BLS12_381)
