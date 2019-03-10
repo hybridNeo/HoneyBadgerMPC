@@ -129,7 +129,9 @@ class Listener(object):
     def get_host_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
-        return (s.getsockname()[0])
+        ip =  (s.getsockname()[0])
+        print(ip)
+        return ip
 
     def clear_all_program_queues(self):
         self.queues = {}

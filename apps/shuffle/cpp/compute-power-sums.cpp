@@ -1,4 +1,5 @@
 #include <NTL/ZZ_pXFactoring.h>
+
 #include <cassert>
 #include <chrono>
 #include <fstream>

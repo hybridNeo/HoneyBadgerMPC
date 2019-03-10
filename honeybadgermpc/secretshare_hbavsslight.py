@@ -548,7 +548,7 @@ if __name__ == "__main__":
     from .config import load_config
     from .ipc import NodeDetails, ProcessProgramRunner
 
-  
+
     configfile = os.environ.get('HBMPC_CONFIG')
     nodeid = os.environ.get('HBMPC_NODE_ID')
     value = 42 # if value to be shared in not passed via arguments.
