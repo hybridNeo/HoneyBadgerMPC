@@ -25,7 +25,7 @@ def run_cmd_local(cmd):
 
 def share_secret(peers, key, namespace):
 	cmds = []
-	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' ,'-o' ,'orderer.example.com:7050', '-n' ,'honeybadgerscc' ,'-c']
+	cmd_list = ['peer','chaincode', 'query','-C' ,'mychannel' ,'-o' ,'orderer.example.com:7050', '-n' ,'honeybadgerscc' ,'-c']
 	for i in range(len(peers)):
 		cmd = '{"Args":["pubRecon", "' + str(i) + '","'  + key +  '"," ' + namespace +'"  ]}'
 		cmd_l_i = cmd_list.copy()
