@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import time
 
 def all_games(chaincode):
 	print('Showing all active games')
@@ -10,6 +11,30 @@ def completed_games(chaincode):
 	print('Showing all completed games')
 
 
+
+
+
+def get_result(game_name, chaincode):
+	print("trying to get result")
+	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["endGame", "' + game_name  + '","blah"]}']
+	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out = task.stdout
+	err = task.stderr	
+	out_str = err.decode('utf-8')
+	# print(out_str)
+	res = 'None'
+	try:
+		arr = out_str.split('status:200 payload:')
+		res = arr[1]
+		res = res[1:-3] # trim quotes 
+	except:
+		print("Failed to get result")
+		
+	if res == 'None':
+		time.sleep(1)
+		get_result(game_name, chaincode)
+	print("################# RESULT/WINNER #################")
+	print(res)	
 
 def inp_to_int(inp):
 	inp = inp.lower()
@@ -95,7 +120,7 @@ def join_game(chaincode):
 	print("Successfully shared secret")
 	print("Now wait for the timeout to view the result")
 	# print(inp)
-
+	get_result(game_name, chaincode)
 
 def main():
 	if(len(sys.argv) < 2):
@@ -103,6 +128,8 @@ def main():
 		sys.exit(0)
 
 	chaincode_name = sys.argv[1]
+	# get_result('test',chaincode_name)
+	# sys.exit(0)
 	print('###################################')
 	print('# ROCK PAPER SCISSORS 		###')
 	
