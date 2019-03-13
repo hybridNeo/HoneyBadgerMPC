@@ -32,7 +32,7 @@ def share_secret(peers, key, value, namespace):
 		cmd_l_i.append(cmd)
 		cmds.append(cmd_l_i)
 	print(cmds)
-	local_cmd = ['python3.7', '-m' 'honeybadgermpc.secretshare_hbavsslight' , str(len(peers)) ,'/usr/src/HoneyBadgerMPC/conf/hbavss.hyper.ini', value]
+	local_cmd = ['python3.7', '-m', 'honeybadgermpc.secretshare_hbavsslight' , str(len(peers)) ,'/usr/src/HoneyBadgerMPC/conf/hbavss.hyper.ini', value]
 	print(local_cmd)
 	local_tid = run_cmd_local(local_cmd)
 	run_cmd_remote(cmds, peers, [local_tid])
