@@ -31,7 +31,7 @@ def get_result(game_name, chaincode):
 		print("Failed to get result")
 		
 	if res == 'None':
-		time.sleep(1)
+		time.sleep(5)
 		get_result(game_name, chaincode)
 	print("################# RESULT/WINNER #################")
 	print(res)	
