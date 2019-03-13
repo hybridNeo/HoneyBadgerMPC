@@ -2,19 +2,58 @@ import os
 import sys
 import subprocess
 import time
+import json
+
+def int_to_inp(inp):
+	if inp == '10':
+		return "rock"
+	if inp == "11":
+		return "paper"
+	if inp == "12":
+		return "scissors"
+	return "NA"
 
 def all_games(chaincode):
+	print('################################################################################')
 	print('Showing all active games')
+	print('################################################################################')
+	cmd_list = ['peer','chaincode', 'query','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["getActiveGames"]}']
+	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out = task.stdout
+	err = task.stderr	
+	out_str = out.decode('utf-8')
+	if out_str == 'null\n':
+		return
+	# print(out_str)
+	json_array = json.loads(out_str)
+	# print(json_array)		
+	print("GAME NAME\tPlayer 1\tPlayer 2")
+	for i in json_array:
+		print(i['name'] + '\t\t' + i['u1']+ '\t\t' + i['u2']+ '\t\t') 
+
 
 
 def completed_games(chaincode):
+	print('################################################################################')
 	print('Showing all completed games')
-
-
-
+	print('################################################################################')
+	cmd_list = ['peer','chaincode', 'query','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["getCompletedGames"]}']
+	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out = task.stdout
+	err = task.stderr	
+	out_str = out.decode('utf-8')
+	if out_str == 'null\n':
+		return
+	# print(out_str)
+	json_array = json.loads(out_str)
+	# print(json_array)		
+	print("GAME NAME\tPlayer 1\tPlayer 2\tMove 1\tMove 2\tResult")
+	for i in json_array:
+		print(i['name'] + '\t\t' + i['u1']+ '\t\t' + i['u2']+ '\t\t' + int_to_inp(i['m1'])+ '\t' + int_to_inp(i['m2']) + '\t' + i['result'])
 
 
 def get_result(game_name, chaincode):
+	time.sleep(2)
 	print("trying to get result")
 	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["endGame", "' + game_name  + '","blah"]}']
 	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -31,10 +70,10 @@ def get_result(game_name, chaincode):
 		print("Failed to get result")
 		
 	if res == 'None':
-		time.sleep(5)
 		get_result(game_name, chaincode)
-	print("################# RESULT/WINNER #################")
-	print(res)	
+	else:
+		print("################# RESULT/WINNER #################")
+		print(res)	
 
 def inp_to_int(inp):
 	inp = inp.lower()
