@@ -131,7 +131,7 @@ def join_game(chaincode):
 	game_name = input()
 	print("Enter your username for the game")
 	user_name = input()
-	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["joinGame", "' + game_name +  '","' + user_name + '"  ]}']
+	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' ,'-c','{"Args":["joinGame", "' + game_name +  '","' + user_name + '"  ]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
 	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out = task.stdout
 	err = task.stderr	
