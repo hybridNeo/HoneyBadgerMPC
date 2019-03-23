@@ -55,7 +55,7 @@ def completed_games(chaincode):
 def get_result(game_name, chaincode):
 	time.sleep(2)
 	print("trying to get result")
-	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["endGame", "' + game_name  + '","blah"]}']
+	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel', '-c','{"Args":["endGame", "' + game_name  + '","blah"]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
 	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out = task.stdout
 	err = task.stderr	
@@ -70,7 +70,8 @@ def get_result(game_name, chaincode):
 		print("Failed to get result")
 		
 	if res == 'None':
-		get_result(game_name, chaincode)
+		pass
+		#get_result(game_name, chaincode)
 	else:
 		print("################# RESULT/WINNER #################")
 		print(res)	
