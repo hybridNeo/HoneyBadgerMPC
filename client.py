@@ -95,11 +95,12 @@ def create_game(chaincode):
 	time_limit = input()
 	print("Enter your username for the game")
 	user_name = input()
-	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' , '-n' ,chaincode ,'-c','{"Args":["createGame", "' + game_name + '","'  + time_limit +  '","' + user_name + '"  ]}']
+	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' , '-c','{"Args":["createGame", "' + game_name + '","'  + time_limit +  '","' + user_name + '"  ]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
 	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out = task.stdout
 	err = task.stderr	
 	out_str = err.decode('utf-8')
+	print(out,err)
 	cellname = ''
 	print("###############################################################################################")
 	print("Created game successfully")
