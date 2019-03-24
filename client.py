@@ -184,8 +184,9 @@ def join_game(chaincode):
 	print("Successfully shared secret")
 	print("Now wait for the timeout to view the result")
 	# print(inp)
+	time.sleep(6)
 	open_secrets(game_name, chaincode)
-	os.sleep(15)
+	time.sleep(15)
 	get_result(game_name, chaincode)
 
 def main():
