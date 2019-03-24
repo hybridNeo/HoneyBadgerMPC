@@ -52,6 +52,30 @@ def completed_games(chaincode):
 		print(i['name'] + '\t\t' + i['u1']+ '\t\t' + i['u2']+ '\t\t' + int_to_inp(i['m1'])+ '\t' + int_to_inp(i['m2']) + '\t' + i['result'])
 
 
+def open_secrets(game_name, chaincode):
+	time.sleep(2)
+	print("trying to get result")
+	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel', '-c','{"Args":["openMoves", "' + game_name  + '","blah"]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
+	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	out = task.stdout
+	err = task.stderr	
+	out_str = err.decode('utf-8')
+	# print(out_str)
+	res = 'None'
+	try:
+		arr = out_str.split('status:200 payload:')
+		res = arr[1]
+		res = res[1:-3] # trim quotes 
+	except:
+		print("Failed to get result")
+		
+	if res == 'None':
+		open_secrets(game_name, chaincode)
+	else:
+		print("################# Started opening  #################")
+			
+
+
 def get_result(game_name, chaincode):
 	time.sleep(2)
 	print("trying to get result")
@@ -70,8 +94,7 @@ def get_result(game_name, chaincode):
 		print("Failed to get result")
 		
 	if res == 'None':
-		pass
-		#get_result(game_name, chaincode)
+		get_result(game_name, chaincode)
 	else:
 		print("################# RESULT/WINNER #################")
 		print(res)	
@@ -161,6 +184,8 @@ def join_game(chaincode):
 	print("Successfully shared secret")
 	print("Now wait for the timeout to view the result")
 	# print(inp)
+	open_secrets(game_name, chaincode)
+	os.sleep(15)
 	get_result(game_name, chaincode)
 
 def main():
