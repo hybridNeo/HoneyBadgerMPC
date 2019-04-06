@@ -15,12 +15,12 @@ class PreProcessingConstants(object):
     ZEROS_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}zeros"
     RANDS_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}rands"
     POWERS_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}powers"
-    BITS_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}bits"
+    BITS_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}random_bit"
     SHARES_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}specific_share"
     ONE_MINUS_ONE_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}one_minus_one"
     DOUBLE_SHARES_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}double_shares"
     READY_FILE_NAME = f"{SHARED_DATA_DIR}READY"
-
+    RANDOM_BIT_FILE_NAME_PREFIX = f"{SHARED_DATA_DIR}random_bit"
 
 class PreProcessedElements(object):
     def __init__(self):
@@ -45,7 +45,7 @@ class PreProcessedElements(object):
             next(lines), next(lines)
 
             # remaining lines: shared values
-            return [int(line) for line in lines]
+            return [int(line) for line in lines]*100
 
     def _write_shares_to_file(self, f, degree, myid, shares):
         print(self.field.modulus, file=f)
@@ -84,6 +84,12 @@ class PreProcessedElements(object):
         self._create_sharedata_dir_if_not_exists()
         polys = [self.poly.random(t) for _ in range(k)]
         self._write_polys(PreProcessingConstants.RANDS_FILE_NAME_PREFIX, n, t, polys)
+
+    def generate_random_bits(self, k, n, t):
+        self._create_sharedata_dir_if_not_exists()
+        polys = [self.poly.random(t, randint(0, 1)) for _ in range(k)]
+        self._write_polys(
+            PreProcessingConstants.RANDOM_BIT_FILE_NAME_PREFIX, n, t, polys)
 
     def generate_one_minus_one_rands(self, k, n, t):
         self._create_sharedata_dir_if_not_exists()
@@ -152,6 +158,14 @@ class PreProcessedElements(object):
             self._rands[key] = iter(self._read_share_values_from_file(file_path))
         return ctx.Share(next(self._rands[key]), t)
 
+    def get_random_bit(self, ctx, t=None):
+        t = t if t is not None else ctx.t
+        key = (ctx.myid, ctx.N, t)
+        if key not in self._rands:
+            file_suffix = f"_{ctx.N}_{t}-{ctx.myid}.share"
+            file_path = f"{PreProcessingConstants.RANDOM_BIT_FILE_NAME_PREFIX}{file_suffix}"
+            self._rands[key] = iter(self._read_share_values_from_file(file_path))
+        return ctx.Share(next(self._rands[key]), t)
 
     def get_bit(self, ctx):
         key = (ctx.myid, ctx.N, ctx.t)

@@ -118,7 +118,7 @@ class Listener(object):
     def __init__(self, port):
         self.queues = {}
         self.tasks = []
-        server_future = asyncio.start_server(self.handle_client, self.get_host_ip(), port)
+        server_future = asyncio.start_server(self.handle_client, '0.0.0.0', port)
         self.serverTask = asyncio.ensure_future(server_future)
 
     def get_program_queue(self, sid):

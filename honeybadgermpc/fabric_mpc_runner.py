@@ -11,7 +11,7 @@ from honeybadgermpc.field import GF
 from gmpy2 import num_digits
 from honeybadgermpc.mixins import BeaverTriple, MixinOpName
 from math import sqrt
-
+from honeybadgermpc.fixed_point import FixedPoint, ppe, linear_regression_mpc
 
 async def cmp(context, **kwargs):
     pp_elements = kwargs['ppe']
@@ -140,24 +140,33 @@ class PreProcessedLight:
         if len(self.zeros) == 0:
             print("OUT of zeroes")
         else:
-            z = self.zeros[0]
-            self.zeros = self.zeros[1:]
+            z = self.zeros[-1]
+            self.zeros.pop()
             return z
 
     def get_bit(self):
         if len(self.bits) == 0:
             print("OUT of bits")
         else:
-            b = self.bits[0]
-            self.bits = self.bits[1:]
+            b = self.bits[-1]
+            self.bits.pop()
+            return b
+
+    def get_random_bit(self):
+        if len(self.bits) == 0:
+            print("OUT of bits")
+        else:
+            b = self.bits[-1]
+            self.bits.pop()
+            #self.bits = self.bits[1:]
             return b
 
     def get_rand(self):
         if len(self.randoms) == 0:
             print("Out of randoms")
         else:
-            r = self.randoms[0]
-            self.randoms = self.randoms[1:]
+            r = self.randoms[-1]
+            self.randoms.pop()
             return r
 
 
@@ -165,7 +174,7 @@ class PreProcessedLight:
 def get_preprocessing(N, t, node_id):
     zeros_file_name = f"sharedata/zeros_{N}_{t}-{node_id}.share"
     rand_file_name = f"sharedata/rands_{N}_{t}-{node_id}.share"
-    bits_file_name = f"sharedata/bits_{N}_{t}-{node_id}.share"
+    bits_file_name = f"sharedata/random_bit_{N}_{t}-{node_id}.share"
     # print(zeros_file_name)
     zeros = []
     randoms = []
@@ -182,6 +191,11 @@ def get_preprocessing(N, t, node_id):
         bits = f.readlines()
     bits = [x.strip() for x in bits]
 
+
+    # hack to increase the size of zeroes, randoms and bits
+    zeros *= 100
+    randoms *= 100
+    bits *= 100
     pp_elements = PreProcessedLight(zeros=zeros,randoms=randoms, bits=bits)
     return pp_elements
 
@@ -266,6 +280,51 @@ async def equality_wrapper(context, **kwargs):
     # print("The number of communication count_complexity is: ", count_comm)
 
 
+async def linear_regression_wrapper(context, **kwargs):
+    import time
+    pp_elements = kwargs['ppe']
+    global ppe
+    ppe = pp_elements
+    x = FixedPoint(context, 59.0, pp=pp_elements)
+    y = FixedPoint(context, 58.6, pp=pp_elements)
+    t = await x.mul(y)
+    print(t)
+    print(await t.open())
+    ctx= context
+    time1 = time.time()
+    learning_rate = kwargs['learning_rate']
+    epochs = kwargs['epochs']
+    m, b = await linear_regression_mpc(context, pp_elements,
+                                    [FixedPoint(ctx, 1, pp=pp_elements), FixedPoint(ctx, 2, pp=pp_elements),
+                                        FixedPoint(ctx, 3, pp=pp_elements), FixedPoint(ctx, 4, pp=pp_elements),
+                                        FixedPoint(ctx, 5, pp=pp_elements), FixedPoint(ctx, 6, pp=pp_elements),
+                                        FixedPoint(ctx, 7, pp=pp_elements)],
+                                    [FixedPoint(ctx, 2, pp=pp_elements), FixedPoint(ctx, 3, pp=pp_elements),
+                                        FixedPoint(ctx, 4, pp=pp_elements), FixedPoint(ctx, 5, pp=pp_elements),
+                                        FixedPoint(ctx, 6, pp=pp_elements), FixedPoint(ctx, 7, pp=pp_elements),
+                                        FixedPoint(ctx, 8, pp=pp_elements)],
+                                    learning_rate=learning_rate,
+                                    epochs=epochs)
+    # await test_multiplication(ctx)
+    m_r = await m.open()
+    b_r = await b.open()
+    print(f'<RESULT>{m_r};{b_r}</RESULT>')
+    print(f'The time taken is { time.time() - time1}')
+
+
+
+async def cmp_f_wrapper(context, **kwargs):
+    import time
+    print("In the wrapper")
+    pp_elements = kwargs['ppe']
+    global ppe
+    ppe = pp_elements
+    print(kwargs['shares'])
+    x = FixedPoint(context, context.Share(int(kwargs['shares'][0])), pp=pp_elements)
+    y = FixedPoint(context, context.Share(int(kwargs['shares'][1])), pp=pp_elements)
+    t = await x.lt(y)
+    print(await (t.open()))
+
 async def run_mpc_loader(app_name, config, n, t, id, shares):
     program_runner = ProcessProgramRunner(config, n, t, id,
             {MixinOpName.MultiplyShare:BeaverTriple.multiply_shares})
@@ -282,7 +341,24 @@ async def run_mpc_loader(app_name, config, n, t, id, shares):
         program_runner.add(0, equality_wrapper, ppe=pp_elements, shares=shares)
         await program_runner.join()
         await program_runner.close()
+    elif app_name == 'cmp_field':
+        print(f'CMP FIELD {id}')
+        pp_elements = get_preprocessing(N, t, id)
+        program_runner.add(0, cmp_f_wrapper, ppe=pp_elements, shares=shares)
+        await program_runner.join()
+        await program_runner.close()
+    elif app_name == 'linear_regression_mpc':
+        pp_elements = get_preprocessing(N, t, id)
 
+        program_runner.add(0, linear_regression_wrapper, ppe=pp_elements, shares=shares,
+                learning_rate=0.05, epochs=10)
+        await program_runner.join()
+        await program_runner.close()
+    elif app_name == 'auction':
+        pp_elements = get_preprocessing(N, t, id)
+        program_runner.add(0, linear_regression_wrapper, ppe=pp_elements, shares=shares)
+        await program_runner.join()
+        await program_runner.close()
 
 '''
     arg1  nodeid
