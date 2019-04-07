@@ -294,11 +294,11 @@ async def linear_regression_wrapper(context, **kwargs):
     time1 = time.time()
     learning_rate = kwargs['learning_rate']
     epochs = kwargs['epochs']
-    X_l = len(kwargs['shares'])/2
+    X_l = int(len(kwargs['shares'])/2)
     X_s = kwargs['shares'][0:X_l]
     Y_s = kwargs['shares'][X_l:]
-    X = [ FixedPoint(ctx, context.Share(int(kwargs['shares'][i])), pp=pp_elements) for i in X_s ]
-    Y = [ FixedPoint(ctx, context.Share(int(kwargs['shares'][i])), pp=pp_elements) for i in Y_s ]
+    X = [ FixedPoint(ctx, context.Share(int(i)), pp=pp_elements) for i in X_s ]
+    Y = [ FixedPoint(ctx, context.Share(int(i)), pp=pp_elements) for i in Y_s ]
     m, b = await linear_regression_mpc(context, pp_elements,
                                     X,
 				    Y,

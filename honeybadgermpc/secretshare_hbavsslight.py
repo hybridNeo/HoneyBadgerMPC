@@ -480,9 +480,9 @@ async def run_hbavss_light(config, n, t, id, value):
 
     # XXX HACK! Increase wait time. Must find better way if possible -- e.g:
     # try/except retry logic ...
-    await asyncio.sleep(2)
+    # await asyncio.sleep(2)
     await sender.connect()
-    await asyncio.sleep(1)
+    # await asyncio.sleep(1)
 
     # Generate the CRS deterministically
     crs = [G1.rand(seed=[0, 0, 0, 1]), G1.rand(seed=[0, 0, 0, 2])]
