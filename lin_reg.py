@@ -111,7 +111,6 @@ def create_eqexample(chaincode, num_vals):
 
 def join_eqexample(chaincode, x, y):
 	eqexample_name = 'test'
-	print("Enter your username")
 	user_name = 'user2'
 	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel' ,'-c','{"Args":["addData", "' + eqexample_name +  '","' + user_name + '"  ]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
 	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -131,7 +130,7 @@ def join_eqexample(chaincode, x, y):
 	cellnames = cellname.split(';')
 	cellname_x = cellnames[0]
 	cellname_y = cellnames[1]
-
+	time.sleep(2)
 	local_cmd = ['python3.7', '-m', 'honeybadgermpc.fabric_share_secret' , str(x) ,cellname_x, 'rps']
 	print("Dealing Shares to endorsers.....")
 	print(local_cmd)
@@ -160,12 +159,12 @@ def main():
 	print('Linear Regression tester')
 	if sys.argv[2] != 'skip':
 		print('CREATING MPC INSTANCE')
-		create_eqexample(chaincode_name, '3')
+		create_eqexample(chaincode_name, '7')
 		time.sleep(2)
 		print('AVSSing the inputs')
 		Xs = [1,2,3,4,5,6,7,8]
 		Ys = [2,3,4,5,6,7,8,9]
-		for i in range(3):
+		for i in range(7):
 			join_eqexample(chaincode_name, Xs[i], Ys[i])
 			time.sleep(2)
 	
