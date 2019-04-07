@@ -172,9 +172,11 @@ def main():
 		for i in range(7):
 			join_eqexample(chaincode_name, Xs[i], Ys[i])
 			time.sleep(2)
-	
+
+	time1 = time.time()	
 	mpc('test',chaincode_name)
 	get_result('test', chaincode_name)
-	
+	print(f'Time taken for MPC operation is {time.time()-time1}')
+ 
 if __name__ == '__main__':
 	main()

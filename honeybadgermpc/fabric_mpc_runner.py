@@ -294,16 +294,15 @@ async def linear_regression_wrapper(context, **kwargs):
     time1 = time.time()
     learning_rate = kwargs['learning_rate']
     epochs = kwargs['epochs']
+    X_l = len(kwargs['shares'])/2
+    X_s = kwargs['shares'][0:X_l]
+    Y_s = kwargs['shares'][X_l:]
+    X = [ FixedPoint(ctx, context.Share(int(kwargs['shares'][i])), pp=pp_elements) for i in X_s ]
+    Y = [ FixedPoint(ctx, context.Share(int(kwargs['shares'][i])), pp=pp_elements) for i in Y_s ]
     m, b = await linear_regression_mpc(context, pp_elements,
-                                    [FixedPoint(ctx, 1, pp=pp_elements), FixedPoint(ctx, 2, pp=pp_elements),
-                                        FixedPoint(ctx, 3, pp=pp_elements), FixedPoint(ctx, 4, pp=pp_elements),
-                                        FixedPoint(ctx, 5, pp=pp_elements), FixedPoint(ctx, 6, pp=pp_elements),
-                                        FixedPoint(ctx, 7, pp=pp_elements)],
-                                    [FixedPoint(ctx, 2, pp=pp_elements), FixedPoint(ctx, 3, pp=pp_elements),
-                                        FixedPoint(ctx, 4, pp=pp_elements), FixedPoint(ctx, 5, pp=pp_elements),
-                                        FixedPoint(ctx, 6, pp=pp_elements), FixedPoint(ctx, 7, pp=pp_elements),
-                                        FixedPoint(ctx, 8, pp=pp_elements)],
-                                    learning_rate=learning_rate,
+                                    X,
+				    Y,
+				    learning_rate=learning_rate,
                                     epochs=epochs)
     # await test_multiplication(ctx)
     m_r = await m.open()
