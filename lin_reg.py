@@ -72,7 +72,7 @@ def mpc(eqexample_name, chaincode):
 def get_result(eqexample_name, chaincode):
 	time.sleep(2)
 	print("trying to get result")
-	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel', '-c','{"Args":["endeqtest", "' + eqexample_name  + '","blah"]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
+	cmd_list = ['peer','chaincode', 'invoke','-C' ,'mychannel', '-c','{"Args":["endLinReg", "' + eqexample_name  + '","blah"]}','-n' ,chaincode ,'--peerAddresses', 'peer0.org1.example.com:7051', '--peerAddresses', 'peer1.org1.example.com:7051', '--peerAddresses','peer0.org2.example.com:7051','--peerAddresses', 'peer1.org2.example.com:7051']
 	task = subprocess.run(cmd_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	out = task.stdout
 	err = task.stderr	
@@ -90,7 +90,12 @@ def get_result(eqexample_name, chaincode):
 		get_result(eqexample_name, chaincode)
 	else:
 		print("################# MPC RESULT #################")
-		print(res)	
+		try:
+			a = res.split("<RESULT>")
+			b = a[1].split("</RESULT>")
+			print(b[0])
+		except:
+			print(res)	
 
 
 def create_eqexample(chaincode, num_vals):
@@ -169,6 +174,7 @@ def main():
 			time.sleep(2)
 	
 	mpc('test',chaincode_name)
+	get_result('test', chaincode_name)
 	
 if __name__ == '__main__':
 	main()
