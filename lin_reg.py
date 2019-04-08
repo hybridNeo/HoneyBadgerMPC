@@ -170,7 +170,7 @@ def main():
 		Xs = [1,2,3,4,5,6,7,8]
 		Ys = [2,3,4,5,6,7,8,9]
 		for i in range(7):
-			join_eqexample(chaincode_name, Xs[i], Ys[i])
+			join_eqexample(chaincode_name, int(2**32 * Xs[i]),int(2**32* Ys[i]))
 			time.sleep(2)
 
 	time1 = time.time()	
