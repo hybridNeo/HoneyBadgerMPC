@@ -280,6 +280,17 @@ async def equality_wrapper(context, **kwargs):
     # print("The number of communication count_complexity is: ", count_comm)
 
 
+async def auction(context, **kwargs):
+    import time
+    pp_elements = kwargs['ppe']
+    global ppe
+    ppe = pp_elements
+    time1 = time.time()
+    bids = [ FixedPoint(context, context.Share(int(i)), pp=pp_elements) for i in kwargs['shares'] ]
+    winning_bid = await auction_mpc(context, pp_elements, bids)
+    winning_bid_r = await winning_bid.open()
+    print("<RESULT>"  + str(winning_bid_r) +  "</RESULT>")
+
 async def linear_regression_wrapper(context, **kwargs):
     import time
     pp_elements = kwargs['ppe']
@@ -309,6 +320,18 @@ async def linear_regression_wrapper(context, **kwargs):
     b_r = await b.open()
     print(f'<RESULT>{m_r};{b_r}</RESULT>')
     print(f'The time taken is { time.time() - time1}')
+
+
+async def auction_mpc(context, pp_elements, bids):
+    max_bid = bids[0]
+
+    for i in range(1, len(bids)):
+        t = await max_bid.lt(bids[i])
+        v = (await (t.open())).value
+        if v == 1:
+            max_bid = bids[i]
+
+    return max_bid
 
 
 
@@ -350,12 +373,12 @@ async def run_mpc_loader(app_name, config, n, t, id, shares):
         pp_elements = get_preprocessing(N, t, id)
 
         program_runner.add(0, linear_regression_wrapper, ppe=pp_elements, shares=shares,
-                learning_rate=0.05, epochs=10)
+                learning_rate=0.05, epochs=100)
         await program_runner.join()
         await program_runner.close()
     elif app_name == 'auction':
         pp_elements = get_preprocessing(N, t, id)
-        program_runner.add(0, linear_regression_wrapper, ppe=pp_elements, shares=shares)
+        program_runner.add(0, auction, ppe=pp_elements, shares=shares)
         await program_runner.join()
         await program_runner.close()
 
