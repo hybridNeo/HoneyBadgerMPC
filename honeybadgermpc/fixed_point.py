@@ -98,20 +98,20 @@ async def bit_ltl(ctx, a, b_bits):
     a: Public
     b: List of private bit shares. Least significant digit first
     """
-    print("d1")
+    #    print("d1")
     b_bits = [ctx.Share(Field(1) - bi.v) for bi in b_bits]
-    print("d2")
+    # print("d2")
     a_bits = [ctx.Share(ai) for ai in to_bits(int(a), len(b_bits))]
-    print("d3")
+    # print("d3")
     # a_bits_opened = [(await a_bit.open()) for a_bit in a_bits]
-    print("d4")
+    # print("d4")
     # print("a: ", a_bits_opened)
-    print("d5")
+    # print("d5")
     # b_bits_opened = [(await b_bit.open()) for b_bit in b_bits]
     # print("b: ", b_bits_opened)
-    print("d6")
+    # print("d6")
     carry = await get_carry_bit(ctx, a_bits, b_bits)
-    print("d7")
+    # print("d7")
     return ctx.Share(Field(1) - carry.v)
 
 
@@ -119,19 +119,19 @@ async def mod2m(ctx, x, k, m):
     r1, r1_bits = await random2m(ctx, m)
     r2, _ = await random2m(ctx, k + KAPPA - m)
     r2 = ctx.Share(r2.v * Field(2) ** m)
-    print("here")
+    # print("here")
     c = await (x + r2 + r1 + Field(2) ** (k - 1)).open()
-    print("here2")
+    # print("here2")
     c2 = int(c) % (2 ** m)
     u = await bit_ltl(ctx, c2, r1_bits)
-    print("here3")
+    # print("here3")
     a2 = ctx.Share(Field(c2) - r1.v + (2 ** m) * u.v)
     return a2
 
 
 async def trunc(ctx, x, k, m):
     a2 = await mod2m(ctx, x, k, m)
-    print("A2 done")
+    # print("A2 done")
     d = ctx.Share((x.v - a2.v) / (Field(2)) ** m)
     return d
 
@@ -146,9 +146,9 @@ class FixedPoint(object):
 
         if type(x) in [int, float]:
             ppe = pp
-            print(ppe.get_zero())
+            # print(ppe.get_zero())
             self.share = ctx.Share(Field(int(ppe.get_zero())) + (Field(int(x * 2 ** F))))
-            print(self.share)
+            # print(self.share)
         elif type(x) is ctx.Share:
             ppe = pp
             self.share = x
@@ -169,11 +169,11 @@ class FixedPoint(object):
             start_time = time.time()
             res_share = await (self.share * x.share)
             end_time = time.time()
-            print("Multiplication time: ", end_time - start_time)
+            # print("Multiplication time: ", end_time - start_time)
             start_time = time.time()
             res_share = await trunc_pr(self.ctx, res_share, 2 * K, F)
             end_time = time.time()
-            print("Trunc time: ", end_time - start_time)
+            # print("Trunc time: ", end_time - start_time)
             return FixedPoint(self.ctx, res_share, pp=self.ppe)
         raise NotImplementedError
 
@@ -216,29 +216,28 @@ async def linear_regression_mpc(ctx, ppe, X, y, m_current=0, b_current=0, epochs
         for i in range(N):
             m_gradient = m_gradient.sub(await y[i].sub(y_current[i]).mul(X[i]))
         m_gradient = await m_gradient.div(N)
-        print("m_gradient: ", await m_gradient.open())
+        # print("m_gradient: ", await m_gradient.open())
         b_gradient = FixedPoint(ctx, 0, pp=ppe)
         for i in range(N):
             b_gradient = b_gradient.add(y[i].sub(y_current[i]))
         b_gradient = (await b_gradient.div(N)).neg()
-        print("b_gradient: ", await b_gradient.open())
+        # print("b_gradient: ", await b_gradient.open())
         m_current = m_current.sub(await (learning_rate.mul(m_gradient)))
         b_current = b_current.sub(await (learning_rate.mul(b_gradient)))
-        print("m_current: ", await m_current.open(), "b_current: ",
-              await b_current.open())
+        # print("m_current: ", await m_current.open(), "b_current: ",await b_current.open())
     return m_current, b_current
 
 
 async def test_multiplication(ctx):
     for i in range(100):
         random.seed(i)
-        print("Multiplication ", i)
+        # print("Multiplication ", i)
         x = (random.random() - 0.5) * 100
         y = (random.random() - 0.5) * 100
         z = x * y
-        print(x, y, z)
+        # print(x, y, z)
         z2 = await (await FixedPoint(ctx, x).mul(FixedPoint(ctx, y))).open()
-        print(abs(z - z2))
+        # print(abs(z - z2))
         assert abs(z - z2) < 1e-6
 
 
@@ -248,8 +247,8 @@ async def _prog(ctx):
     start_time = time.time()
     t = await x.mul(y)
     end_time = time.time()
-    print("Multiplication time: ", end_time - start_time)
-    print(await t.open())
+    # print("Multiplication time: ", end_time - start_time)
+    # print(await t.open())
     m, b = await linear_regression_mpc(ctx,
                                     [FixedPoint(ctx, 1), FixedPoint(ctx, 2),
                                         FixedPoint(ctx, 3), FixedPoint(ctx, 4),
@@ -262,7 +261,7 @@ async def _prog(ctx):
                                     learning_rate=0.05,
                                     epochs=100)
     await test_multiplication(ctx)
-    print(await m.open(), await b.open())
+    # print(await m.open(), await b.open())
 
 
 if __name__ == "__main__":
