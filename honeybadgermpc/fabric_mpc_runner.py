@@ -141,7 +141,8 @@ class PreProcessedLight:
             print("OUT of zeroes")
         else:
             z = self.zeros[-1]
-            self.zeros.pop()
+            if len(self.bits) > 1:
+                self.zeros.pop()
             return z
 
     def get_bit(self):
@@ -149,7 +150,8 @@ class PreProcessedLight:
             print("OUT of bits")
         else:
             b = self.bits[-1]
-            self.bits.pop()
+            if len(self.bits) > 1:
+                self.bits.pop()
             return b
 
     def get_random_bit(self):
@@ -157,7 +159,8 @@ class PreProcessedLight:
             print("OUT of bits")
         else:
             b = self.bits[-1]
-            self.bits.pop()
+            if len(self.bits) > 1:
+                self.bits.pop()
             #self.bits = self.bits[1:]
             return b
 
@@ -166,7 +169,8 @@ class PreProcessedLight:
             print("Out of randoms")
         else:
             r = self.randoms[-1]
-            self.randoms.pop()
+            if len(self.bits) > 1:
+                self.randoms.pop()
             return r
 
 
