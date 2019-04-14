@@ -129,6 +129,9 @@ async def comparison(context, a_share, b_share, pp_elements):
 
 class PreProcessedLight:
     def __init__(self, zeros, randoms, bits):
+        self.num_randoms = 0
+        self.num_bits = 0
+        self.num_rand_bits = 0
         if len(zeros) > 4:
             self.zeros = zeros[4:]
         if len(randoms) > 4:
@@ -146,6 +149,7 @@ class PreProcessedLight:
             return z
 
     def get_bit(self):
+        self.num_bits += 1
         if len(self.bits) == 0:
             print("OUT of bits")
         else:
@@ -155,6 +159,7 @@ class PreProcessedLight:
             return b
 
     def get_random_bit(self):
+        self.num_rand_bits += 1
         if len(self.bits) == 0:
             print("OUT of bits")
         else:
@@ -165,6 +170,7 @@ class PreProcessedLight:
             return b
 
     def get_rand(self):
+        self.num_randoms += 1
         if len(self.randoms) == 0:
             print("Out of randoms")
         else:
@@ -173,6 +179,10 @@ class PreProcessedLight:
                 self.randoms.pop()
             return r
 
+    def print_stats(self):
+        print(f'Number of bits used {self.num_bits}')
+        print(f'Number of random bits used {self.num_rand_bits}')
+        print(f'Number of randoms used {self.num_randoms}')
 
 # TODO replace with active preprocessing engine
 def get_preprocessing(N, t, node_id):
@@ -355,24 +365,29 @@ async def run_mpc_loader(app_name, config, n, t, id, shares):
     program_runner = ProcessProgramRunner(config, n, t, id,
             {MixinOpName.MultiplyShare:BeaverTriple.multiply_shares})
     await program_runner.start()
+    import time
+    begin_time = time.time()
     # logic to load the appropriate program
     if app_name == 'cmp':
         pp_elements = get_preprocessing(N, t, id)
         program_runner.add(0, cmp, node_id=id, ppe=pp_elements)
         await program_runner.join()
         await program_runner.close()
+        pp_elements.print_stats()
     elif app_name == 'equals':
         pp_elements = get_preprocessing(N, t, id)
         # print(shares)
         program_runner.add(0, equality_wrapper, ppe=pp_elements, shares=shares)
         await program_runner.join()
         await program_runner.close()
+        pp_elements.print_stats()
     elif app_name == 'cmp_field':
         print(f'CMP FIELD {id}')
         pp_elements = get_preprocessing(N, t, id)
         program_runner.add(0, cmp_f_wrapper, ppe=pp_elements, shares=shares)
         await program_runner.join()
         await program_runner.close()
+        pp_elements.print_stats()
     elif app_name == 'linear_regression_mpc':
         pp_elements = get_preprocessing(N, t, id)
 
@@ -380,11 +395,14 @@ async def run_mpc_loader(app_name, config, n, t, id, shares):
                 learning_rate=0.05, epochs=100)
         await program_runner.join()
         await program_runner.close()
+        pp_elements.print_stats()
     elif app_name == 'auction':
         pp_elements = get_preprocessing(N, t, id)
         program_runner.add(0, auction, ppe=pp_elements, shares=shares)
         await program_runner.join()
         await program_runner.close()
+        pp_elements.print_stats()
+    print(f'Time taken for MPC operation is {time.time() - begin_time}')
 
 '''
     arg1  nodeid
