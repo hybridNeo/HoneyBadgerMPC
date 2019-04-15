@@ -338,13 +338,10 @@ async def linear_regression_wrapper(context, **kwargs):
 
 async def auction_mpc(context, pp_elements, bids):
     max_bid = bids[0]
-
     for i in range(1, len(bids)):
         t = await max_bid.lt(bids[i])
-        v = (await (t.open())).value
-        if v == 1:
-            max_bid = bids[i]
-
+        t = FixedPoint(context, t, pp=pp_elements)
+        max_bid = (await (t.mul(max_bid.add(bids[i])))).sub(max_bid)
     return max_bid
 
 
