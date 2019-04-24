@@ -154,7 +154,7 @@ def main():
 		sys.exit(0)
 
 	chaincode_name = sys.argv[1]
-	print('Linear Regression tester')
+	print('Auction tester')
 	if sys.argv[2] != 'skip':
 		print('CREATING MPC INSTANCE')
 		create_eqexample(chaincode_name, '7')
