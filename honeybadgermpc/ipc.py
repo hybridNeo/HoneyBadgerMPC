@@ -51,6 +51,7 @@ class NodeCommunicator(object):
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
+        print(self.bytes_sent)
         self.benchmark_logger.info("Total bytes sent out: %d", self.bytes_sent)
         # Add None to the sender queues and drain out all the messages.
         for i in range(len(self._sender_queues)):
